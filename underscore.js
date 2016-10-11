@@ -911,8 +911,20 @@
 
   // Determines whether to execute a function as a constructor
   // or a normal function with the provided arguments.
+
+  // 执行绑定上下文
+  // 这个函数比较重要
+  // @sourceFunc 待绑定的函数
+  // @boundFunc 绑定的方法
+  // @context 待绑定的执行环境
+  // @callingContext 当前的执行环境
+  // @args 函数执行参数
   var executeBound = function(sourceFunc, boundFunc, context, callingContext, args) {
+    // 如果当前的执行上下文和绑定的方法的上下文不一致，即不是通过 new 调用的
+    // _.bind(function() {}, this)
     if (!(callingContext instanceof boundFunc)) return sourceFunc.apply(context, args);
+
+    // 作为构造函数被调用，要对上下文进行指定
     var self = baseCreate(sourceFunc.prototype);
     var result = sourceFunc.apply(self, args);
     if (_.isObject(result)) return result;
@@ -922,6 +934,8 @@
   // Create a function bound to a given object (assigning `this`, and arguments,
   // optionally). Delegates to **ECMAScript 5**'s native `Function.bind` if
   // available.
+
+  // 绑定函数的上下文
   _.bind = restArgs(function(func, context, args) {
     if (!_.isFunction(func)) throw new TypeError('Bind must be called on a function');
     var bound = restArgs(function(callArgs) {
@@ -934,15 +948,23 @@
   // arguments pre-filled, without changing its dynamic `this` context. _ acts
   // as a placeholder by default, allowing any combination of arguments to be
   // pre-filled. Set `_.partial.placeholder` for a custom placeholder argument.
+
+  // 部分函数（偏函数）
+  // 返回一个新函数函数，该函数的部分参数被固定（boundArgs）
   _.partial = restArgs(function(func, boundArgs) {
     var placeholder = _.partial.placeholder;
     var bound = function() {
       var position = 0, length = boundArgs.length;
       var args = Array(length);
       for (var i = 0; i < length; i++) {
+
+        // 如果当前位置是 _ 占位符，以新参数赋值，
+        // 否则以绑定的参数赋值
         args[i] = boundArgs[i] === placeholder ? arguments[position++] : boundArgs[i];
       }
+      // 还有剩下的参数没有被处理，直接加入args
       while (position < arguments.length) args.push(arguments[position++]);
+      // 这里第三个参数是 this，没有改变上下文
       return executeBound(func, bound, this, this, args);
     };
     return bound;
@@ -953,10 +975,21 @@
   // Bind a number of an object's methods to that object. Remaining arguments
   // are the method names to be bound. Useful for ensuring that all callbacks
   // defined on an object belong to it.
+
+  // 将一个对象中的指定方法们绑定到该对象中
+  // 在setTimeout中表现比较明显
+  // const obj = { name: 'Jack', say() {
+  //   console.log(`My name is ${this.name}`)
+  // }
+  // setTimeout(obj.say, 0)
+  // 在setTimeout中，默认（非严格模式下）上下文会变更成window
   _.bindAll = restArgs(function(obj, keys) {
+    // 首先扁平铺开，将参数转成数组
     keys = flatten(keys, false, false);
     var index = keys.length;
     if (index < 1) throw new Error('bindAll must be passed function names');
+
+    // 逐个进行bind
     while (index--) {
       var key = keys[index];
       obj[key] = _.bind(obj[key], obj);
@@ -964,10 +997,14 @@
   });
 
   // Memoize an expensive function by storing its results.
+  
+  // 利用闭包特性，创建一个记忆缓存的函数
   _.memoize = function(func, hasher) {
     var memoize = function(key) {
       var cache = memoize.cache;
+      // 获取缓存地址（其实就是cache的key），hasher是可选的处理函数
       var address = '' + (hasher ? hasher.apply(this, arguments) : key);
+      // 如果缓存中尚不存在，则执行函数进行计算存储
       if (!_.has(cache, address)) cache[address] = func.apply(this, arguments);
       return cache[address];
     };
@@ -977,14 +1014,29 @@
 
   // Delays a function for the given number of milliseconds, and then calls
   // it with the arguments supplied.
+  // 函数延迟执行
   _.delay = restArgs(function(func, wait, args) {
     return setTimeout(function() {
+      // 这里需要注意，延迟之后，绑定到null，就是将上下文绑定到全局对象（window），
+      // 所以，如果需要用到上下文对象，一定要提前bind好
+      // const obj = {
+      //   name: 'Jack',
+      //   say() {
+      //     console.log(this.name)
+      //   }
+      // }
+      // _.delay(obj.say, 1000)
+      // 这种情况this.name就是空，可以这样处理：
+      // const say = _.bind(obj.say, obj)
+      // _.delay(say, 1000)
       return func.apply(null, args);
     }, wait);
   });
 
   // Defers a function, scheduling it to run after the current call stack has
   // cleared.
+
+  // 一毫秒后执行，一般和timeout 0作用类似，等待当前线程中已经存在的任务解决之后，再执行指定函数
   _.defer = _.partial(_.delay, _, 1);
 
   // Returns a function, that, when invoked, will only be triggered at most once
@@ -992,12 +1044,15 @@
   // as much as it can, without ever going more than once per `wait` duration;
   // but if you'd like to disable the execution on the leading edge, pass
   // `{leading: false}`. To disable execution on the trailing edge, ditto.
+  
+  // 节流执行函数，wait为间隔时间
   _.throttle = function(func, wait, options) {
     var timeout, context, args, result;
     var previous = 0;
     if (!options) options = {};
 
     var later = function() {
+      // leading如果是true，则以当前时间起始
       previous = options.leading === false ? 0 : _.now();
       timeout = null;
       result = func.apply(context, args);
@@ -1006,24 +1061,36 @@
 
     var throttled = function() {
       var now = _.now();
+      // 最近一次执行的时间
       if (!previous && options.leading === false) previous = now;
+
+      // 还有间隔时间与设置的wait时间的时间差
       var remaining = wait - (now - previous);
       context = this;
       args = arguments;
+
+      // 如果时间差 <= 0说明已经超过设置的时间，则立即执行
+      // TODO 第二句个条件 previous > now ? 什么情况下会触发
       if (remaining <= 0 || remaining > wait) {
+
+        // 清除之前的回调任务
         if (timeout) {
           clearTimeout(timeout);
           timeout = null;
         }
+        // 设置最近一次执行的时间
         previous = now;
         result = func.apply(context, args);
         if (!timeout) context = args = null;
+
+        // trailing 这个配置的意义在于，如果最近一次func不能执行，会延后func的执行
       } else if (!timeout && options.trailing !== false) {
         timeout = setTimeout(later, remaining);
       }
       return result;
     };
 
+    // 取消当前任务
     throttled.cancel = function() {
       clearTimeout(timeout);
       previous = 0;
