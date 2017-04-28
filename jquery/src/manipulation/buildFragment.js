@@ -13,6 +13,8 @@ var rhtml = /<|&#?\w+;/;
 
 function buildFragment( elems, context, scripts, selection, ignored ) {
 	var elem, tmp, tag, wrap, contains, j,
+	/// createDocumentFragment的好处是只创建一个文档片段，而
+	/// 不是一个实际的节点，操作这个fragment相对节点会带来具体的性能提升
 		fragment = context.createDocumentFragment(),
 		nodes = [],
 		i = 0,
@@ -24,6 +26,7 @@ function buildFragment( elems, context, scripts, selection, ignored ) {
 		if ( elem || elem === 0 ) {
 
 			// Add nodes directly
+			/// 如果是一个对象，直接添加进节点
 			if ( jQuery.type( elem ) === "object" ) {
 
 				// Support: Android <=4.0 only, PhantomJS 1 only
@@ -31,10 +34,12 @@ function buildFragment( elems, context, scripts, selection, ignored ) {
 				jQuery.merge( nodes, elem.nodeType ? [ elem ] : elem );
 
 			// Convert non-html into a text node
+			/// 不是一个html字符串，处理为文本节点
 			} else if ( !rhtml.test( elem ) ) {
 				nodes.push( context.createTextNode( elem ) );
 
 			// Convert html into DOM nodes
+			/// 接下来就是处理HTML的情况
 			} else {
 				tmp = tmp || fragment.appendChild( context.createElement( "div" ) );
 

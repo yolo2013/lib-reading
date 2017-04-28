@@ -12,6 +12,8 @@
  *
  * Date: @DATE
  */
+
+ /// 为了兼容各种引入方式，是requirejs的总入口
 ( function( global, factory ) {
 
 	"use strict";

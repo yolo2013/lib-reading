@@ -51,11 +51,13 @@ jQuery.fn = jQuery.prototype = {
 
 	// The current version of jQuery being used
 
-	// 版本号
+	/// 版本号
 	jquery: version,
 
+	/// 构造器指向本身
 	constructor: jQuery,
 
+	/// 重置length属性为0
 	// The default length of a jQuery object is 0
 	length: 0,
 
@@ -357,6 +359,7 @@ jQuery.extend( {
 
 	// Support: Android <=4.0 only, PhantomJS 1 only
 	// push.apply(_, arraylike) throws on ancient WebKit
+	/// 数组合并
 	merge: function( first, second ) {
 		var len = +second.length,
 			j = 0,

@@ -14,10 +14,14 @@ define( [
 // context (optional): If specified, the fragment will be created in this context,
 // defaults to document
 // keepScripts (optional): If true, will include scripts passed in the html string
+/// 解析HTML
 jQuery.parseHTML = function( data, context, keepScripts ) {
+	/// data必须是一个字符串
 	if ( typeof data !== "string" ) {
 		return [];
 	}
+
+	/// 如果context是bool值，表示这段代码中是否包含script
 	if ( typeof context === "boolean" ) {
 		keepScripts = context;
 		context = false;
@@ -25,6 +29,7 @@ jQuery.parseHTML = function( data, context, keepScripts ) {
 
 	var base, parsed, scripts;
 
+	/// 没有指定context，默认document
 	if ( !context ) {
 
 		// Stop scripts or inline event handlers from being executed immediately
@@ -43,10 +48,12 @@ jQuery.parseHTML = function( data, context, keepScripts ) {
 		}
 	}
 
+	/// 示例：["<a>", "a", index: 0, input: "<a>"]
 	parsed = rsingleTag.exec( data );
 	scripts = !keepScripts && [];
 
 	// Single tag
+	/// 如果是一个独立标签，直接创建一个元素，并转为数组
 	if ( parsed ) {
 		return [ context.createElement( parsed[ 1 ] ) ];
 	}
