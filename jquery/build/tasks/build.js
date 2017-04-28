@@ -22,6 +22,7 @@ module.exports = function( grunt ) {
 		// in the first column.
 		wrapper = read( "wrapper.js" ).split( /[\x20\t]*\/\/ @CODE\n(?:[\x20\t]*\/\/[^\n]+\n)*/ ),
 
+		/// TODO 对requirejs不是很了解，下面这些配置，回过头来再看吧
 		config = {
 			baseUrl: "src",
 			name: "jquery",
